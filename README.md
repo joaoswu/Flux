@@ -1,6 +1,12 @@
 # Fluxtool
 
+[![CI](https://github.com/joaoswu/Flux/actions/workflows/ci.yml/badge.svg)](https://github.com/joaoswu/Flux/actions/workflows/ci.yml)
+[![Release](https://github.com/joaoswu/Flux/actions/workflows/release.yml/badge.svg)](https://github.com/joaoswu/Flux/actions/workflows/release.yml)
+[![Latest Release](https://img.shields.io/github/v/release/joaoswu/Flux?label=release)](https://github.com/joaoswu/Flux/releases)
+
 Fluxtool is a modern Windows multitool for power users, built with Electron. It combines fast system utilities, automation, diagnostics, and productivity tools in a sleek glass UI.
+
+![Fluxtool screenshot](docs/screenshots/placeholder.svg)
 
 ## Highlights
 - Live system dashboard with CPU/RAM/Disk metrics
@@ -39,20 +45,34 @@ out\make\
 ```
 
 ### Portable ZIP
-If you want a portable ZIP, package then zip the `out\fluxtool-win32-x64` folder.
+```powershell
+npm run package
+powershell -NoProfile -Command "Compress-Archive -Path out\fluxtool-win32-x64\* -DestinationPath out\make\fluxtool-win32-x64.zip -Force"
+```
 
 ## Publishing (Auto-Updates)
-Fluxtool uses GitHub Releases for updates. Make sure your repo settings are configured and then publish:
+Fluxtool uses GitHub Releases for updates. Tag a release to trigger the release workflow:
+```powershell
+git tag v0.5.0
+git push origin v0.5.0
+```
+
+Or publish manually:
 ```powershell
 $env:GITHUB_TOKEN="YOUR_TOKEN"
 npm run publish
 ```
+
+## GitHub Actions
+- **CI** builds on every push and uploads artifacts.
+- **Release** runs on tags (`v*`) and publishes to GitHub Releases.
 
 ## Project Structure
 ```
 assets/          App icons
 src/             Main + renderer code
 out/             Build output (gitignored)
+docs/            Docs + screenshots
 ```
 
 ## Notes

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <rect width="1200" height="675" fill="#0b1120"/>
+  <rect x="80" y="80" width="1040" height="515" rx="28" fill="#0f182b" stroke="#2a3b52"/>
+  <text x="600" y="320" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="36" fill="#7cf4d9">Fluxtool</text>
+  <text x="600" y="370" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="18" fill="#9aa7b4">Add real screenshots here</text>
+</svg>
