@@ -1,0 +1,418 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Fluxtool</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <div class="loading-screen" id="loadingScreen">
+      <div class="loading-card">
+        <div class="loading-logo">M</div>
+        <div class="loading-title">Fluxtool</div>
+        <div class="loading-sub">Warming up your toolkit...</div>
+        <div class="loading-bar"><span id="loadingBar"></span></div>
+      </div>
+    </div>
+
+    <div class="tour" id="tour">
+      <div class="tour-backdrop"></div>
+      <div class="tour-card glass">
+        <div class="tour-title" id="tourTitle">Welcome</div>
+        <div class="tour-body" id="tourBody"></div>
+        <div class="tour-footer">
+          <button class="btn ghost" id="tourSkip">Skip</button>
+          <div class="tour-steps" id="tourSteps"></div>
+          <div class="tour-actions">
+            <button class="btn ghost" id="tourPrev">Back</button>
+            <button class="btn primary" id="tourNext">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="command-palette" id="commandPalette">
+      <div class="palette-card glass">
+        <div class="palette-title">Command Palette</div>
+        <input id="paletteInput" type="text" placeholder="Type a command or search (e.g., clear temp, network)" />
+        <div class="palette-list" id="paletteList"></div>
+        <div class="palette-hint">Enter to run • Esc to close</div>
+      </div>
+    </div>
+
+    <div class="app" id="appRoot">
+      <div class="titlebar">
+        <div class="drag-region">
+          <div class="titlebar-left">
+            <div class="titlebar-logo">M</div>
+            <div class="titlebar-title">Fluxtool</div>
+          </div>
+          <div class="titlebar-center">System utilities for power users</div>
+        </div>
+        <div class="titlebar-controls">
+          <button class="win-btn" id="winMin">—</button>
+          <button class="win-btn" id="winMax">▢</button>
+          <button class="win-btn close" id="winClose">✕</button>
+        </div>
+      </div>
+      <div class="background">
+        <span class="orb orb-1"></span>
+        <span class="orb orb-2"></span>
+        <span class="orb orb-3"></span>
+        <span class="grid"></span>
+      </div>
+
+      <aside class="sidebar glass">
+        <div class="brand">
+          <div class="logo">M</div>
+          <div>
+            <div class="brand-title">Fluxtool</div>
+            <div class="brand-sub">Utilities for power users</div>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <button class="nav-item active" data-page="dashboard">
+            <span class="nav-icon">DB</span>
+            <span>Dashboard</span>
+          </button>
+          <button class="nav-item" data-page="quick">
+            <span class="nav-icon">QA</span>
+            <span>Quick Actions</span>
+          </button>
+          <button class="nav-item" data-page="disk">
+            <span class="nav-icon">DS</span>
+            <span>Disk Tools</span>
+          </button>
+          <button class="nav-item" data-page="network">
+            <span class="nav-icon">NW</span>
+            <span>Network</span>
+          </button>
+          <button class="nav-item" data-page="clipboard">
+            <span class="nav-icon">CB</span>
+            <span>Clipboard</span>
+          </button>
+          <button class="nav-item" data-page="process">
+            <span class="nav-icon">PR</span>
+            <span>Processes</span>
+          </button>
+          <button class="nav-item" data-page="startup">
+            <span class="nav-icon">SU</span>
+            <span>Startup</span>
+          </button>
+          <button class="nav-item" data-page="automation">
+            <span class="nav-icon">AU</span>
+            <span>Automation</span>
+          </button>
+          <button class="nav-item" data-page="notes">
+            <span class="nav-icon">NT</span>
+            <span>Notes</span>
+          </button>
+          <button class="nav-item" data-page="settings">
+            <span class="nav-icon">ST</span>
+            <span>Settings</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer glass-inset">
+          <div class="footer-label">System status</div>
+          <div class="footer-value" id="systemStatus">All services normal</div>
+          <div class="footer-sub" id="systemUptime">Loading uptime...</div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar glass">
+          <div class="title-wrap">
+            <div class="page-title" id="page-title">Dashboard</div>
+            <div class="page-sub" id="page-sub">Quick access to the tools you need</div>
+          </div>
+          <div class="top-actions">
+            <label class="search glass-inset">
+              <input type="text" placeholder="Search tools" />
+              <span class="shortcut">Ctrl K</span>
+            </label>
+            <button class="btn primary" id="runShortcut">Run</button>
+            <button class="btn ghost">Help</button>
+          </div>
+        </header>
+
+        <section class="content glass">
+          <div class="page active" data-page="dashboard">
+            <div class="hero glass-inset">
+              <div>
+                <div class="hero-title">Welcome back</div>
+                <div class="hero-sub">Here is a snapshot of your PC health and recent activity.</div>
+              </div>
+              <div class="hero-actions">
+                <button class="btn primary" id="dashCleanup">Run Cleanup</button>
+                <button class="btn ghost" id="dashLogs">View Logs</button>
+              </div>
+            </div>
+
+            <div class="stat-grid">
+              <div class="stat-card glass-inset">
+                <div class="stat-label">CPU</div>
+                <div class="stat-value" id="cpuValue">--</div>
+                <div class="stat-sub" id="cpuSub">Loading</div>
+                <canvas class="sparkline" id="cpuChart"></canvas>
+                <div class="spark-tooltip" id="cpuTip"></div>
+              </div>
+              <div class="stat-card glass-inset">
+                <div class="stat-label">Memory</div>
+                <div class="stat-value" id="memValue">--</div>
+                <div class="stat-sub" id="memSub">Loading</div>
+                <canvas class="sparkline" id="memChart"></canvas>
+                <div class="spark-tooltip" id="memTip"></div>
+              </div>
+              <div class="stat-card glass-inset">
+                <div class="stat-label">Storage</div>
+                <div class="stat-value" id="diskValue">--</div>
+                <div class="stat-sub" id="diskSub">Loading</div>
+                <canvas class="sparkline" id="diskChart"></canvas>
+                <div class="spark-tooltip" id="diskTip"></div>
+              </div>
+            </div>
+
+          <div class="two-col">
+            <div class="glass-inset card">
+              <div class="card-title">Network</div>
+              <div class="card-sub" id="netValue">Loading...</div>
+            </div>
+            <div class="glass-inset card">
+              <div class="card-title">Uptime</div>
+              <div class="card-sub" id="uptimeValue">Loading...</div>
+            </div>
+          </div>
+
+            <div class="two-col" style="margin-top: 14px;">
+              <div class="glass-inset card">
+                <div class="card-title">Recent Actions</div>
+                <ul class="list" id="recentActions">
+                  <li>Cleared temp files</li>
+                  <li>Updated Wi-Fi profile</li>
+                  <li>Pinned new clipboard item</li>
+                </ul>
+              </div>
+              <div class="glass-inset card">
+                <div class="card-title">Suggested Tasks</div>
+                <ul class="list">
+                  <li>Run disk analysis</li>
+                  <li>Check startup apps</li>
+                  <li>Review active processes</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="page" data-page="quick">
+            <div class="page-heading">Quick Actions</div>
+            <div class="page-desc">Run common fixes and utilities with one click.</div>
+            <div class="tile-grid">
+              <button class="glass-inset tile" id="actionClearTemp">Clear Temp</button>
+              <button class="glass-inset tile" id="actionFlushDns">Flush DNS</button>
+              <button class="glass-inset tile" id="actionRestartExplorer">Restart Explorer</button>
+              <button class="glass-inset tile" id="actionDeviceManager">Device Manager</button>
+              <button class="glass-inset tile" id="actionBatteryReport">Battery Report</button>
+              <button class="glass-inset tile" id="actionKillHung">Kill Hung Apps</button>
+            </div>
+            <div class="status" id="actionStatus">Ready.</div>
+          </div>
+
+          <div class="page" data-page="disk">
+            <div class="page-heading">Disk Tools</div>
+            <div class="page-desc">Analyze storage and find large files fast.</div>
+            <div class="two-col">
+              <div class="glass-inset card">
+                <div class="card-title">Drives</div>
+                <div class="stack" id="drivesList"></div>
+              </div>
+              <div class="glass-inset card">
+                <div class="card-title">Largest Files</div>
+                <div class="inline">
+                  <input type="text" id="scanPath" placeholder="C:\\" />
+                  <button class="btn primary" id="scanBtn">Scan</button>
+                </div>
+                <div class="inline" style="margin-top: 10px;">
+                  <input id="scanMinSize" type="number" min="1" value="50" />
+                  <div class="card-sub">Min MB</div>
+                  <input id="scanExclude" type="text" placeholder="Exclude (e.g. node_modules, AppData)" />
+                </div>
+                <div class="list" id="scanResults"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="page" data-page="network">
+            <div class="page-heading">Network Tools</div>
+            <div class="page-desc">Ping, trace, and inspect connection status.</div>
+            <div class="glass-inset card">
+              <div class="inline">
+                <input type="text" id="netTarget" placeholder="8.8.8.8" />
+                <button class="btn primary" id="netPing">Ping</button>
+                <button class="btn ghost" id="netTrace">Trace</button>
+                <button class="btn ghost" id="netDns">DNS</button>
+              </div>
+              <pre class="output" id="netOutput">Ready.</pre>
+            </div>
+          </div>
+
+          <div class="page" data-page="clipboard">
+            <div class="page-heading">Clipboard</div>
+            <div class="page-desc">Pinned items stay across sessions.</div>
+            <div class="inline" style="margin-bottom: 12px;">
+              <input type="text" id="clipboardSearch" placeholder="Search clipboard" />
+              <input type="text" id="clipboardTagFilter" placeholder="Filter by tag" />
+              <button class="btn ghost" id="clipboardClear">Clear History</button>
+            </div>
+            <div class="inline" style="margin-bottom: 12px;">
+              <input id="clipboardExpire" type="number" min="0" placeholder="Auto-expire minutes (0 = off)" />
+              <button class="btn ghost" id="clipboardExpireSave">Save Rule</button>
+            </div>
+            <div class="stack" id="clipboardList"></div>
+          </div>
+
+          <div class="page" data-page="process">
+            <div class="page-heading">Processes</div>
+            <div class="page-desc">Search and stop with safety warnings.</div>
+            <div class="inline" style="margin-bottom: 12px;">
+              <input type="text" id="processSearch" placeholder="Search process" />
+              <select id="processSort" class="select">
+                <option value="cpu">Sort by CPU</option>
+                <option value="ram">Sort by RAM</option>
+                <option value="name">Sort by Name</option>
+              </select>
+              <button class="btn ghost" id="processRefresh">Refresh</button>
+            </div>
+            <div class="stack" id="processList"></div>
+          </div>
+
+          <div class="page" data-page="startup">
+            <div class="page-heading">Startup</div>
+            <div class="page-desc">Enable or disable apps that launch on boot.</div>
+            <div class="two-col">
+              <div class="glass-inset card">
+                <div class="card-title">Enabled</div>
+                <div class="stack" id="startupList"></div>
+              </div>
+              <div class="glass-inset card">
+                <div class="card-title">Disabled</div>
+                <div class="stack" id="startupDisabled"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="page" data-page="automation">
+            <div class="page-heading">Automation Center</div>
+            <div class="page-desc">Create multiple schedules and run actions automatically.</div>
+            <div class="glass-inset card">
+              <div class="card-title">Create Schedule</div>
+              <div class="inline" style="margin-top: 10px;">
+                <input type="text" id="autoName" placeholder="Name (e.g., Nightly cleanup)" />
+                <select id="autoAction" class="select">
+                  <option value="clearTemp">Clear Temp</option>
+                  <option value="flushDns">Flush DNS</option>
+                  <option value="restartExplorer">Restart Explorer</option>
+                  <option value="batteryReport">Battery Report</option>
+                </select>
+                <input id="autoMinutes" type="number" min="5" value="60" />
+                <button class="btn primary" id="autoAdd">Add</button>
+              </div>
+            </div>
+            <div class="glass-inset card" style="margin-top: 14px;">
+              <div class="card-title">Active Schedules</div>
+              <div class="stack" id="automationList"></div>
+            </div>
+            <div class="glass-inset card" style="margin-top: 14px;">
+              <div class="card-title">Automation History</div>
+              <div class="stack" id="automationHistory"></div>
+            </div>
+          </div>
+
+          <div class="page" data-page="notes">
+            <div class="page-heading">Notes</div>
+            <div class="page-desc">Scratchpad for snippets and reminders.</div>
+            <textarea class="glass-inset note" id="notesArea" rows="10"></textarea>
+            <div class="inline" style="margin-top: 12px;">
+              <button class="btn primary" id="notesSave">Save Notes</button>
+              <div class="status" id="notesStatus">Idle</div>
+            </div>
+          </div>
+
+          <div class="page" data-page="settings">
+            <div class="page-heading">Settings</div>
+            <div class="page-desc">Tune the look and feel.</div>
+            <div class="stack">
+              <div class="glass-inset card">
+                <div class="card-title">Appearance</div>
+                <div class="inline">
+                  <button class="btn ghost" id="themeLight">Light</button>
+                  <button class="btn ghost" id="themeDark">Dark</button>
+                </div>
+              </div>
+              <div class="glass-inset card">
+                <div class="card-title">Updates</div>
+                <div class="card-sub">Check for updates and view status.</div>
+                <div class="inline" style="margin-top: 12px;">
+                  <button class="btn ghost" id="checkUpdates">Check Updates</button>
+                  <div class="status" id="updateStatus">Idle</div>
+                </div>
+              </div>
+              <div class="glass-inset card">
+                <div class="card-title">Startup</div>
+                <div class="card-sub">Launch Fluxtool on login.</div>
+                <div class="inline" style="margin-top: 12px;">
+                  <label class="toggle">
+                    <input type="checkbox" id="autoStartToggle" />
+                    <span></span>
+                  </label>
+                </div>
+              </div>
+              <div class="glass-inset card">
+                <div class="card-title">Scheduler</div>
+                <div class="card-sub">Run recurring quick actions.</div>
+                <div class="inline" style="margin-top: 12px;">
+                  <select id="scheduleAction" class="select">
+                    <option value="clearTemp">Clear Temp</option>
+                    <option value="flushDns">Flush DNS</option>
+                    <option value="restartExplorer">Restart Explorer</option>
+                    <option value="batteryReport">Battery Report</option>
+                  </select>
+                  <input id="scheduleMinutes" type="number" min="5" value="60" />
+                  <button class="btn ghost" id="scheduleToggle">Start</button>
+                  <button class="btn ghost" id="scheduleRunNow">Run Now</button>
+                </div>
+                <div class="status" id="scheduleStatus">Not running</div>
+                <div class="card-sub" style="margin-top: 10px;">History</div>
+                <div class="stack" id="scheduleHistory"></div>
+              </div>
+              <div class="glass-inset card">
+                <div class="card-title">Version</div>
+                <div class="card-sub" id="appVersion">Loading...</div>
+              </div>
+              <div class="glass-inset card">
+                <div class="card-title">Data Paths</div>
+                <div class="card-sub" id="appPaths">Loading...</div>
+              </div>
+              <div class="glass-inset card">
+                <div class="card-title">Onboarding</div>
+                <div class="card-sub">Replay the guided tour.</div>
+                <div class="inline" style="margin-top: 12px;">
+                  <button class="btn ghost" id="restartTour">Restart Tour</button>
+                </div>
+              </div>
+              <div class="glass-inset card">
+                <div class="card-title">Behavior</div>
+                <ul class="list">
+                  <li>Launch on startup</li>
+                  <li>Minimize to tray</li>
+                  <li>Show notifications</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
