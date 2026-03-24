@@ -9,6 +9,8 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+app.setAppUserModelId('com.joaoswu.fluxtool');
+
 const STORE_FILE = 'store.json';
 let store = {
   notes: '',
@@ -74,6 +76,14 @@ const runPowerShellSafe = (command) =>
   });
 
 const psQuote = (value) => "'" + String(value || '').replace(/'/g, "''") + "'";
+const systemRoot = process.env.SystemRoot || 'C:\\Windows';
+const system32 = path.join(systemRoot, 'System32');
+
+const openSystemPath = async (fileName) => {
+  const fullPath = path.join(system32, fileName);
+  const result = await shell.openPath(fullPath);
+  if (result) throw new Error(result);
+};
 
 let lastCpuInfo = os.cpus();
 let mainWindow;
@@ -165,6 +175,7 @@ const startClipboardWatcher = () => {
 };
 
 const createWindow = () => {
+  const iconPath = path.join(app.getAppPath(), 'assets', 'icon.ico');
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 820,
@@ -173,6 +184,7 @@ const createWindow = () => {
     backgroundColor: '#0a0f1a',
     frame: false,
     titleBarStyle: 'hidden',
+    icon: iconPath,
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
     },
@@ -182,10 +194,12 @@ const createWindow = () => {
 };
 
 const createTray = () => {
-  const dataUrl =
-    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAU0lEQVR4nO3PMQ0AIBAEwff/0U0tKQd2QzZzYq0vQ1BVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVn0FZwo7YpT1pQAAAABJRU5ErkJggg==';
-  const icon = nativeImage.createFromDataURL(dataUrl);
-  tray = new Tray(icon);
+  const iconPath = path.join(app.getAppPath(), 'assets', 'icon.ico');
+  const icon = nativeImage.createFromPath(iconPath);
+  const fallback = nativeImage.createFromDataURL(
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAU0lEQVR4nO3PMQ0AIBAEwff/0U0tKQd2QzZzYq0vQ1BVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVn0FZwo7YpT1pQAAAABJRU5ErkJggg=='
+  );
+  tray = new Tray(icon.isEmpty() ? fallback : icon);
   const menu = Menu.buildFromTemplate([
     { label: 'Show Multitool', click: () => mainWindow && mainWindow.show() },
     { label: 'Hide', click: () => mainWindow && mainWindow.hide() },
@@ -256,11 +270,17 @@ ipcMain.handle('network:dns', async (_, target) => {
 });
 
 ipcMain.handle('quick:flushDns', async () => runPowerShell('ipconfig /flushdns'));
+ipcMain.handle('quick:registerDns', async () => runPowerShell('ipconfig /registerdns'));
 
 ipcMain.handle('quick:restartExplorer', async () => {
   await runPowerShell('taskkill /f /im explorer.exe');
   await runPowerShell('Start-Process explorer.exe');
   return 'Explorer restarted';
+});
+
+ipcMain.handle('quick:startExplorer', async () => {
+  await runPowerShell('Start-Process explorer.exe');
+  return 'Explorer started';
 });
 
 ipcMain.handle('quick:clearTemp', async () => {
@@ -272,7 +292,7 @@ ipcMain.handle('quick:clearTemp', async () => {
 });
 
 ipcMain.handle('quick:openDeviceManager', async () => {
-  await shell.openPath('devmgmt.msc');
+  await openSystemPath('devmgmt.msc');
   return 'Opened Device Manager';
 });
 
@@ -286,6 +306,105 @@ ipcMain.handle('quick:batteryReport', async () => {
 ipcMain.handle('quick:killHung', async () => {
   await runPowerShell('Get-Process | Where-Object {$_.Responding -eq $false} | Stop-Process -Force');
   return 'Closed unresponsive apps';
+});
+
+ipcMain.handle('quick:emptyRecycle', async () => {
+  await runPowerShell('Clear-RecycleBin -Force');
+  return 'Recycle Bin emptied';
+});
+
+ipcMain.handle('quick:taskManager', async () => {
+  await openSystemPath('taskmgr.exe');
+  return 'Opened Task Manager';
+});
+
+ipcMain.handle('quick:services', async () => {
+  await openSystemPath('services.msc');
+  return 'Opened Services';
+});
+
+ipcMain.handle('quick:eventViewer', async () => {
+  await openSystemPath('eventvwr.msc');
+  return 'Opened Event Viewer';
+});
+
+ipcMain.handle('quick:controlPanel', async () => {
+  await openSystemPath('control.exe');
+  return 'Opened Control Panel';
+});
+
+ipcMain.handle('quick:windowsUpdate', async () => {
+  await shell.openExternal('ms-settings:windowsupdate');
+  return 'Opened Windows Update';
+});
+
+ipcMain.handle('quick:systemInfo', async () => {
+  await openSystemPath('msinfo32.exe');
+  return 'Opened System Info';
+});
+
+ipcMain.handle('quick:ipconfig', async () => {
+  return runPowerShell('ipconfig /all');
+});
+
+ipcMain.handle('quick:openTemp', async () => {
+  const result = await shell.openPath(app.getPath('temp'));
+  if (result) throw new Error(result);
+  return 'Opened Temp folder';
+});
+
+ipcMain.handle('quick:diskCleanup', async () => {
+  await openSystemPath('cleanmgr.exe');
+  return 'Opened Disk Cleanup';
+});
+
+ipcMain.handle('quick:powerOptions', async () => {
+  await openSystemPath('powercfg.cpl');
+  return 'Opened Power Options';
+});
+
+ipcMain.handle('quick:resourceMonitor', async () => {
+  await openSystemPath('resmon.exe');
+  return 'Opened Resource Monitor';
+});
+
+ipcMain.handle('quick:systemProperties', async () => {
+  await openSystemPath('sysdm.cpl');
+  return 'Opened System Properties';
+});
+
+ipcMain.handle('quick:networkConnections', async () => {
+  await openSystemPath('ncpa.cpl');
+  return 'Opened Network Connections';
+});
+
+ipcMain.handle('quick:openHosts', async () => {
+  await runPowerShell(
+    'Start-Process notepad.exe "C:\\\\Windows\\\\System32\\\\drivers\\\\etc\\\\hosts"',
+  );
+  return 'Opened hosts file';
+});
+
+const runElevatedCommand = async (command) => {
+  const escaped = command.replace(/"/g, '\\"');
+  await runPowerShell(
+    `Start-Process -Verb RunAs -FilePath "cmd.exe" -ArgumentList "/c ${escaped}"`,
+  );
+};
+
+ipcMain.handle('quick:sfcScan', async () => {
+  await runElevatedCommand('sfc /scannow');
+  return 'Started SFC scan';
+});
+
+ipcMain.handle('quick:dismScan', async () => {
+  await runElevatedCommand('DISM /Online /Cleanup-Image /ScanHealth');
+  return 'Started DISM scan';
+});
+
+ipcMain.handle('quick:checkDisk', async () => {
+  await runElevatedCommand('chkdsk C: /scan');
+  return 'Started Check Disk scan';
 });
 
 ipcMain.handle('disk:scanLargeFiles', async (_, options) => {
@@ -431,7 +550,6 @@ ipcMain.handle('app:setAutostart', (_, enabled) => {
   app.setLoginItemSettings({ openAtLogin: !!enabled });
 });
 
-ipcMain.handle('app:checkUpdates', () => 'Updates not configured');
 ipcMain.handle('app:getVersion', () => app.getVersion());
 ipcMain.handle('app:getPaths', () => ({
   userData: app.getPath('userData'),

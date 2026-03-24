@@ -7,6 +7,10 @@ module.exports = [
     use: 'node-loader',
   },
   {
+    test: /\.(png|ico)$/i,
+    type: 'asset/resource',
+  },
+  {
     test: /[/\\]node_modules[/\\].+\.(m?js|node)$/,
     parser: { amd: false },
     use: {

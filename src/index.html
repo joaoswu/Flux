@@ -8,7 +8,7 @@
   <body>
     <div class="loading-screen" id="loadingScreen">
       <div class="loading-card">
-        <div class="loading-logo">M</div>
+        <img class="logo-img loading-logo" id="logoLoading" alt="Fluxtool logo" />
         <div class="loading-title">Fluxtool</div>
         <div class="loading-sub">Warming up your toolkit...</div>
         <div class="loading-bar"><span id="loadingBar"></span></div>
@@ -44,7 +44,7 @@
       <div class="titlebar">
         <div class="drag-region">
           <div class="titlebar-left">
-            <div class="titlebar-logo">M</div>
+            <img class="logo-img titlebar-logo" id="logoTitlebar" alt="Fluxtool logo" />
             <div class="titlebar-title">Fluxtool</div>
           </div>
           <div class="titlebar-center">System utilities for power users</div>
@@ -64,7 +64,7 @@
 
       <aside class="sidebar glass">
         <div class="brand">
-          <div class="logo">M</div>
+          <img class="logo-img logo" id="logoSidebar" alt="Fluxtool logo" />
           <div>
             <div class="brand-title">Fluxtool</div>
             <div class="brand-sub">Utilities for power users</div>
@@ -132,7 +132,7 @@
               <input type="text" placeholder="Search tools" />
               <span class="shortcut">Ctrl K</span>
             </label>
-            <button class="btn primary" id="runShortcut">Run</button>
+            <button class="btn primary" id="runShortcut"><span>Run</span></button>
             <button class="btn ghost">Help</button>
           </div>
         </header>
@@ -155,22 +155,37 @@
                 <div class="stat-label">CPU</div>
                 <div class="stat-value" id="cpuValue">--</div>
                 <div class="stat-sub" id="cpuSub">Loading</div>
-                <canvas class="sparkline" id="cpuChart"></canvas>
-                <div class="spark-tooltip" id="cpuTip"></div>
               </div>
               <div class="stat-card glass-inset">
                 <div class="stat-label">Memory</div>
                 <div class="stat-value" id="memValue">--</div>
                 <div class="stat-sub" id="memSub">Loading</div>
-                <canvas class="sparkline" id="memChart"></canvas>
-                <div class="spark-tooltip" id="memTip"></div>
               </div>
               <div class="stat-card glass-inset">
                 <div class="stat-label">Storage</div>
                 <div class="stat-value" id="diskValue">--</div>
                 <div class="stat-sub" id="diskSub">Loading</div>
-                <canvas class="sparkline" id="diskChart"></canvas>
-                <div class="spark-tooltip" id="diskTip"></div>
+              </div>
+            </div>
+
+            <div class="glass-inset card perf-panel">
+              <div class="card-title">Performance</div>
+              <div class="perf-grid">
+                <div class="perf-chart">
+                  <div class="perf-label">CPU</div>
+                  <canvas class="perf-canvas" id="cpuChart"></canvas>
+                  <div class="spark-tooltip" id="cpuTip"></div>
+                </div>
+                <div class="perf-chart">
+                  <div class="perf-label">Memory</div>
+                  <canvas class="perf-canvas" id="memChart"></canvas>
+                  <div class="spark-tooltip" id="memTip"></div>
+                </div>
+                <div class="perf-chart">
+                  <div class="perf-label">Storage</div>
+                  <canvas class="perf-canvas" id="diskChart"></canvas>
+                  <div class="spark-tooltip" id="diskTip"></div>
+                </div>
               </div>
             </div>
 
@@ -195,12 +210,8 @@
                 </ul>
               </div>
               <div class="glass-inset card">
-                <div class="card-title">Suggested Tasks</div>
-                <ul class="list">
-                  <li>Run disk analysis</li>
-                  <li>Check startup apps</li>
-                  <li>Review active processes</li>
-                </ul>
+                <div class="card-title">Smart Suggestions</div>
+                <div class="stack" id="smartSuggestions"></div>
               </div>
             </div>
           </div>
@@ -208,15 +219,330 @@
           <div class="page" data-page="quick">
             <div class="page-heading">Quick Actions</div>
             <div class="page-desc">Run common fixes and utilities with one click.</div>
-            <div class="tile-grid">
-              <button class="glass-inset tile" id="actionClearTemp">Clear Temp</button>
-              <button class="glass-inset tile" id="actionFlushDns">Flush DNS</button>
-              <button class="glass-inset tile" id="actionRestartExplorer">Restart Explorer</button>
-              <button class="glass-inset tile" id="actionDeviceManager">Device Manager</button>
-              <button class="glass-inset tile" id="actionBatteryReport">Battery Report</button>
-              <button class="glass-inset tile" id="actionKillHung">Kill Hung Apps</button>
+            <div class="quick-toolbar">
+              <div class="inline">
+                <input type="text" id="quickSearch" placeholder="Search quick actions" />
+                <label class="quick-toggle">
+                  <input type="checkbox" id="quickShowAdvanced" />
+                  <span>Show advanced</span>
+                </label>
+              </div>
+              <div class="quick-count" id="quickCount"></div>
+            </div>
+            <div class="quick-section">
+              <div class="card-sub">System</div>
+              <div class="quick-grid" id="quickSystem">
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">CL</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Clear Temp</div>
+                    <div class="quick-desc">Remove temporary files safely.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Safe</span>
+                      <span class="chip">Cleanup</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="clearTemp"><span>Run</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">DNS</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Flush DNS</div>
+                    <div class="quick-desc">Fix stale DNS cache entries.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Network</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="flushDns"><span>Run</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">EXP</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Restart Explorer</div>
+                    <div class="quick-desc">Refresh Windows shell.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Shell</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="restartExplorer"><span>Run</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">BIN</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Empty Recycle Bin</div>
+                    <div class="quick-desc">Free space from deleted files.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Cleanup</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="emptyRecycle"><span>Run</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">BAT</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Battery Report</div>
+                    <div class="quick-desc">Generate battery health report.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Report</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="batteryReport"><span>Run</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">SYS</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">System Info</div>
+                    <div class="quick-desc">Open detailed system summary.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Opens window</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="systemInfo"><span>Open</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">TMP</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Open Temp</div>
+                    <div class="quick-desc">Browse temp folder quickly.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Files</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="openTemp"><span>Open</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">PWR</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Power Options</div>
+                    <div class="quick-desc">Adjust power plans.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Settings</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="powerOptions"><span>Open</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">DSK</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Disk Cleanup</div>
+                    <div class="quick-desc">Launch Cleanup utility.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Cleanup</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="diskCleanup"><span>Open</span></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="quick-section">
+              <div class="card-sub">Utilities</div>
+              <div class="quick-grid">
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">DEV</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Device Manager</div>
+                    <div class="quick-desc">Manage hardware devices.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Devices</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="deviceManager"><span>Open</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">TSK</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Task Manager</div>
+                    <div class="quick-desc">Inspect running apps.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Monitoring</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="taskManager"><span>Open</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">SVC</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Services</div>
+                    <div class="quick-desc">Control Windows services.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Admin</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="services"><span>Open</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">EVT</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Event Viewer</div>
+                    <div class="quick-desc">Review system logs.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Logs</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="eventViewer"><span>Open</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">CTL</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Control Panel</div>
+                    <div class="quick-desc">Classic system settings.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Settings</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="controlPanel"><span>Open</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">UPD</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Windows Update</div>
+                    <div class="quick-desc">Check update settings.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Updates</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="windowsUpdate"><span>Open</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">RES</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Resource Monitor</div>
+                    <div class="quick-desc">Live CPU, disk, network.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Monitoring</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="resourceMonitor"><span>Open</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">SYS</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">System Properties</div>
+                    <div class="quick-desc">Advanced system settings.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Settings</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="systemProperties"><span>Open</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">NET</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Network Connections</div>
+                    <div class="quick-desc">Manage adapters and Wi-Fi.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Network</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="networkConnections"><span>Open</span></button>
+                </div>
+                <div class="quick-card glass-inset" data-tier="advanced">
+                  <div class="quick-icon">HOS</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Hosts File</div>
+                    <div class="quick-desc">Open system hosts file.</div>
+                    <div class="quick-tags">
+                      <span class="chip warn">Admin</span>
+                      <span class="chip">Advanced</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="openHosts"><span>Open</span></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="quick-section">
+              <div class="card-sub">Diagnostics</div>
+              <div class="quick-grid">
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">PNG</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Ping 8.8.8.8</div>
+                    <div class="quick-desc">Test DNS connectivity.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Network</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="pingGoogle"><span>Run</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">TRC</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Trace 8.8.8.8</div>
+                    <div class="quick-desc">Find network hops.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Network</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="traceGoogle"><span>Run</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">IP</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Show IP Config</div>
+                    <div class="quick-desc">View adapter settings.</div>
+                    <div class="quick-tags">
+                      <span class="chip">Network</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="ipconfig"><span>Run</span></button>
+                </div>
+                <div class="quick-card glass-inset" data-tier="advanced">
+                  <div class="quick-icon">SFC</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">SFC Scan</div>
+                    <div class="quick-desc">Check system file integrity.</div>
+                    <div class="quick-tags">
+                      <span class="chip warn">Admin</span>
+                      <span class="chip">Advanced</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="sfcScan"><span>Run</span></button>
+                </div>
+                <div class="quick-card glass-inset" data-tier="advanced">
+                  <div class="quick-icon">DSM</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">DISM Scan</div>
+                    <div class="quick-desc">Repair Windows image.</div>
+                    <div class="quick-tags">
+                      <span class="chip warn">Admin</span>
+                      <span class="chip">Advanced</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="dismScan"><span>Run</span></button>
+                </div>
+                <div class="quick-card glass-inset" data-tier="advanced">
+                  <div class="quick-icon">CHK</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Check Disk (C:)</div>
+                    <div class="quick-desc">Scan for disk errors.</div>
+                    <div class="quick-tags">
+                      <span class="chip warn">Admin</span>
+                      <span class="chip">Advanced</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="checkDisk"><span>Run</span></button>
+                </div>
+                <div class="quick-card glass-inset">
+                  <div class="quick-icon">HNG</div>
+                  <div class="quick-meta">
+                    <div class="quick-title">Kill Hung Apps</div>
+                    <div class="quick-desc">Close unresponsive apps.</div>
+                    <div class="quick-tags">
+                      <span class="chip warn">Force</span>
+                    </div>
+                  </div>
+                  <button class="btn ghost quick-action" data-action="killHung"><span>Run</span></button>
+                </div>
+              </div>
             </div>
             <div class="status" id="actionStatus">Ready.</div>
+            <pre class="output" id="quickOutput">Ready.</pre>
+            <div class="glass-inset card" style="margin-top: 14px;">
+              <div class="card-title">Action History</div>
+              <div class="stack" id="quickHistory"></div>
+            </div>
           </div>
 
           <div class="page" data-page="disk">
@@ -416,3 +742,4 @@
     </div>
   </body>
 </html>
+

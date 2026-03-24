@@ -1,4 +1,5 @@
 import './index.css';
+import iconUrl from './assets/icon.png';
 
 const titles = {
   dashboard: {
@@ -62,6 +63,20 @@ const saveRecent = (id) => {
   const list = recentCommands().filter((x) => x !== id);
   list.unshift(id);
   localStorage.setItem('multitoolRecent', JSON.stringify(list.slice(0, 8)));
+};
+
+const actionHistory = () => {
+  try {
+    return JSON.parse(localStorage.getItem('multitoolActionHistory') || '[]');
+  } catch {
+    return [];
+  }
+};
+
+const addActionHistory = (entry) => {
+  const list = actionHistory();
+  list.unshift(entry);
+  localStorage.setItem('multitoolActionHistory', JSON.stringify(list.slice(0, 60)));
 };
 
 const scheduleHistory = () => {
@@ -186,9 +201,79 @@ const updateStats = async () => {
     drawSparkline('cpuChart', series.cpu);
     drawSparkline('memChart', series.mem);
     drawSparkline('diskChart', series.disk);
+    updateSmartSuggestions(stats);
   } catch (err) {
     // ignore
   }
+};
+
+const updateSmartSuggestions = (stats) => {
+  const container = el('smartSuggestions');
+  if (!container) return;
+  const suggestions = [];
+  if (stats.disk && stats.disk.total) {
+    const freePct = Math.round((stats.disk.free / stats.disk.total) * 100);
+    if (freePct < 15) {
+      suggestions.push({
+        title: 'Low disk space',
+        body: 'Only ' + freePct + '% free on ' + stats.disk.name + ':. Scan for large files.',
+        action: () => {
+          setActive('disk');
+          el('scanPath').value = stats.disk.name + ':\\';
+        },
+        button: 'Scan Disk',
+      });
+    }
+  }
+  if (stats.cpu >= 80) {
+    suggestions.push({
+      title: 'High CPU usage',
+      body: 'CPU is at ' + stats.cpu + '%. Review processes using the most CPU.',
+      action: () => setActive('process'),
+      button: 'Open Processes',
+    });
+  }
+  const memPct = Math.round((stats.memoryUsed / stats.memoryTotal) * 100);
+  if (memPct >= 85) {
+    suggestions.push({
+      title: 'High memory usage',
+      body: 'Memory is at ' + memPct + '%. Consider closing heavy apps.',
+      action: () => setActive('process'),
+      button: 'Review RAM',
+    });
+  }
+  if (!stats.network || !stats.network.length) {
+    suggestions.push({
+      title: 'No active network',
+      body: 'No active network adapters detected.',
+      action: () => setActive('network'),
+      button: 'Open Network',
+    });
+  }
+
+  container.innerHTML = '';
+  if (!suggestions.length) {
+    container.innerHTML = '<div class="card-sub">All good. No actions needed.</div>';
+    return;
+  }
+  suggestions.slice(0, 3).forEach((item) => {
+    const row = document.createElement('div');
+    row.className = 'glass-inset card item-row';
+    row.innerHTML =
+      '<div>' +
+      '<div class="card-title">' +
+      item.title +
+      '</div>' +
+      '<div class="card-sub">' +
+      item.body +
+      '</div>' +
+      '</div>' +
+      '<button class="btn ghost">' +
+      item.button +
+      '</button>';
+    row.querySelector('button').addEventListener('click', item.action);
+    container.appendChild(row);
+  });
 };
 
 const drawSparkline = (id, data) => {
@@ -296,65 +381,303 @@ const setActionStatus = (text) => {
   el('actionStatus').textContent = text;
 };
 
+const quickActionConfig = {
+  clearTemp: {
+    label: 'Clear Temp',
+    run: () => window.api.clearTemp(),
+    notify: true,
+  },
+  flushDns: {
+    label: 'Flush DNS',
+    run: () => window.api.flushDns(),
+    notify: true,
+    undoAction: 'registerDns',
+    undoLabel: 'Register DNS',
+  },
+  restartExplorer: {
+    label: 'Restart Explorer',
+    run: () => window.api.restartExplorer(),
+    notify: true,
+    undoAction: 'startExplorer',
+    undoLabel: 'Start Explorer',
+  },
+  emptyRecycle: {
+    label: 'Empty Recycle Bin',
+    run: () => window.api.emptyRecycle(),
+  },
+  batteryReport: {
+    label: 'Battery Report',
+    run: () => window.api.batteryReport(),
+    notify: true,
+  },
+  systemInfo: {
+    label: 'System Info',
+    run: () => window.api.openSystemInfo(),
+  },
+  openTemp: {
+    label: 'Open Temp',
+    run: () => window.api.openTemp(),
+  },
+  powerOptions: {
+    label: 'Power Options',
+    run: () => window.api.powerOptions(),
+  },
+  diskCleanup: {
+    label: 'Disk Cleanup',
+    run: () => window.api.diskCleanup(),
+  },
+  deviceManager: {
+    label: 'Device Manager',
+    run: () => window.api.openDeviceManager(),
+  },
+  taskManager: {
+    label: 'Task Manager',
+    run: () => window.api.openTaskManager(),
+  },
+  services: {
+    label: 'Services',
+    run: () => window.api.openServices(),
+  },
+  eventViewer: {
+    label: 'Event Viewer',
+    run: () => window.api.openEventViewer(),
+  },
+  controlPanel: {
+    label: 'Control Panel',
+    run: () => window.api.openControlPanel(),
+  },
+  windowsUpdate: {
+    label: 'Windows Update',
+    run: () => window.api.openWindowsUpdate(),
+  },
+  resourceMonitor: {
+    label: 'Resource Monitor',
+    run: () => window.api.resourceMonitor(),
+  },
+  systemProperties: {
+    label: 'System Properties',
+    run: () => window.api.systemProperties(),
+  },
+  networkConnections: {
+    label: 'Network Connections',
+    run: () => window.api.networkConnections(),
+  },
+  openHosts: {
+    label: 'Hosts File',
+    run: () => window.api.openHosts(),
+    confirm:
+      'This opens the system hosts file and may require admin privileges to edit. Continue?',
+  },
+  pingGoogle: {
+    label: 'Ping 8.8.8.8',
+    run: () => window.api.ping('8.8.8.8'),
+    output: true,
+  },
+  traceGoogle: {
+    label: 'Trace 8.8.8.8',
+    run: () => window.api.trace('8.8.8.8'),
+    output: true,
+  },
+  ipconfig: {
+    label: 'Show IP Config',
+    run: () => window.api.showIpConfig(),
+    output: true,
+  },
+  sfcScan: {
+    label: 'SFC Scan',
+    run: () => window.api.sfcScan(),
+    confirm:
+      'This will open an elevated command prompt and may take several minutes. Continue?',
+  },
+  dismScan: {
+    label: 'DISM Scan',
+    run: () => window.api.dismScan(),
+    confirm:
+      'This will open an elevated command prompt and may take several minutes. Continue?',
+  },
+  checkDisk: {
+    label: 'Check Disk (C:)',
+    run: () => window.api.checkDisk(),
+    confirm: 'This will open an elevated command prompt for disk checking. Continue?',
+  },
+  killHung: {
+    label: 'Kill Hung Apps',
+    run: () => window.api.killHung(),
+    confirm: 'This will force close unresponsive apps. Continue?',
+    notify: true,
+  },
+};
+
+const runQuickAction = async (id, sourceButton) => {
+  const config = quickActionConfig[id];
+  if (!config) return;
+  if (config.confirm && !window.confirm(config.confirm)) return;
+  const outputEl = el('quickOutput');
+  setActionStatus('Running ' + config.label + '...');
+  if (outputEl) outputEl.textContent = 'Running ' + config.label + '...';
+  const btn = sourceButton || document.querySelector(`.quick-action[data-action="${id}"]`);
+  const labelSpan = btn?.querySelector('span');
+  if (btn) {
+    btn.classList.add('is-running');
+    btn.setAttribute('aria-busy', 'true');
+  }
+  try {
+    const result = await config.run();
+    const message =
+      typeof result === 'string' && result.trim().length ? result : config.label + ' complete.';
+    if (outputEl) {
+      outputEl.textContent =
+        config.output && typeof result === 'string' && result.length ? result : message;
+    }
+    addActionHistory({
+      id,
+      label: config.label,
+      ts: new Date().toISOString(),
+      status: 'success',
+      output: typeof result === 'string' ? result : message,
+      undoAction: config.undoAction || null,
+      undoLabel: config.undoLabel || null,
+    });
+    renderActionHistory();
+    if (config.notify) {
+      window.api.notify('Fluxtool', message);
+    }
+    setActionStatus(message);
+  } catch (err) {
+    setActionStatus(config.label + ' failed.');
+    if (outputEl) outputEl.textContent = err?.message || config.label + ' failed.';
+    addActionHistory({
+      id,
+      label: config.label,
+      ts: new Date().toISOString(),
+      status: 'failed',
+      output: err?.message || config.label + ' failed.',
+      undoAction: null,
+      undoLabel: null,
+    });
+    renderActionHistory();
+  } finally {
+    if (btn) {
+      btn.classList.remove('is-running');
+      btn.removeAttribute('aria-busy');
+    }
+  }
+};
+
+const renderActionHistory = () => {
+  const container = el('quickHistory');
+  if (!container) return;
+  const list = actionHistory();
+  container.innerHTML = '';
+  if (!list.length) {
+    container.innerHTML = '<div class="card-sub">No actions run yet.</div>';
+    return;
+  }
+  list.forEach((entry) => {
+    const row = document.createElement('div');
+    row.className = 'history-card';
+    const when = new Date(entry.ts).toLocaleString();
+    row.innerHTML =
+      '<div class="history-head">' +
+      '<div>' +
+      '<div class="card-title">' +
+      entry.label +
+      '</div>' +
+      '<div class="history-meta">' +
+      when +
+      ' • ' +
+      entry.status +
+      '</div>' +
+      '</div>' +
+      '<div class="history-actions">' +
+      '<button class="btn ghost" data-action="details">Details</button>' +
+      '<button class="btn ghost" data-action="repeat">Repeat</button>' +
+      (entry.undoAction
+        ? '<button class="btn ghost" data-action="undo">' +
+          (entry.undoLabel || 'Undo') +
+          '</button>'
+        : '') +
+      '</div>' +
+      '</div>' +
+      '<div class="history-output">' +
+      (entry.output || 'No output') +
+      '</div>';
+
+    row.querySelector('[data-action="details"]').addEventListener('click', () => {
+      row.classList.toggle('open');
+    });
+    row.querySelector('[data-action="repeat"]').addEventListener('click', () => {
+      runQuickAction(entry.id);
+    });
+    const undoBtn = row.querySelector('[data-action="undo"]');
+    if (undoBtn) {
+      undoBtn.addEventListener('click', () => {
+        if (entry.undoAction) runQuickAction(entry.undoAction);
+      });
+    }
+    container.appendChild(row);
+  });
+};
+
 const wireQuickActions = () => {
-  el('actionClearTemp').addEventListener('click', async () => {
-    setActionStatus('Clearing temp...');
-    try {
-      const msg = await window.api.clearTemp();
-      window.api.notify('Fluxtool', msg);
-      setActionStatus(msg);
-    } catch (err) {
-      setActionStatus('Temp cleanup failed.');
+  const quickPage = document.querySelector('.page[data-page="quick"]');
+  if (!quickPage) return;
+
+  const bindButtons = () => {
+    const buttons = Array.from(quickPage.querySelectorAll('.quick-action'));
+    buttons.forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!window.api) {
+          setActionStatus('Action API unavailable.');
+          const outputEl = el('quickOutput');
+          if (outputEl) outputEl.textContent = 'Action API unavailable.';
+          return;
+        }
+        runQuickAction(button.dataset.action, button);
+      });
+    });
+    const msg =
+      buttons.length > 0
+        ? 'Quick actions ready (' + buttons.length + ')'
+        : 'Quick actions not found.';
+    setActionStatus(msg);
+    const outputEl = el('quickOutput');
+    if (outputEl) outputEl.textContent = msg;
+  };
+
+  quickPage.addEventListener('click', (event) => {
+    const card = event.target.closest('.quick-card');
+    if (card) {
+      const trigger = card.querySelector('.quick-action');
+      if (trigger) trigger.click();
     }
   });
-  el('actionFlushDns').addEventListener('click', async () => {
-    setActionStatus('Flushing DNS...');
-    try {
-      await window.api.flushDns();
-      window.api.notify('Fluxtool', 'DNS flushed.');
-      setActionStatus('DNS flushed.');
-    } catch (err) {
-      setActionStatus('DNS flush failed.');
-    }
-  });
-  el('actionRestartExplorer').addEventListener('click', async () => {
-    setActionStatus('Restarting Explorer...');
-    try {
-      await window.api.restartExplorer();
-      window.api.notify('Fluxtool', 'Explorer restarted.');
-      setActionStatus('Explorer restarted.');
-    } catch (err) {
-      setActionStatus('Explorer restart failed.');
-    }
-  });
-  el('actionDeviceManager').addEventListener('click', async () => {
-    try {
-      await window.api.openDeviceManager();
-      setActionStatus('Opened Device Manager.');
-    } catch (err) {
-      setActionStatus('Device Manager failed.');
-    }
-  });
-  el('actionBatteryReport').addEventListener('click', async () => {
-    setActionStatus('Generating report...');
-    try {
-      await window.api.batteryReport();
-      window.api.notify('Fluxtool', 'Battery report generated.');
-      setActionStatus('Battery report generated.');
-    } catch (err) {
-      setActionStatus('Battery report failed.');
-    }
-  });
-  el('actionKillHung').addEventListener('click', async () => {
-    setActionStatus('Closing hung apps...');
-    try {
-      await window.api.killHung();
-      window.api.notify('Fluxtool', 'Closed unresponsive apps.');
-      setActionStatus('Closed unresponsive apps.');
-    } catch (err) {
-      setActionStatus('Kill hung apps failed.');
-    }
-  });
+
+  const filter = () => {
+    const search = (el('quickSearch')?.value || '').toLowerCase();
+    const showAdvanced = !!el('quickShowAdvanced')?.checked;
+    const cards = Array.from(document.querySelectorAll('.quick-card'));
+    let visible = 0;
+    cards.forEach((card) => {
+      const title = card.querySelector('.quick-title')?.textContent.toLowerCase() || '';
+      const desc = card.querySelector('.quick-desc')?.textContent.toLowerCase() || '';
+      const isAdvanced = card.dataset.tier === 'advanced';
+      const match = !search || title.includes(search) || desc.includes(search);
+      const show = match && (showAdvanced || !isAdvanced);
+      card.style.display = show ? '' : 'none';
+      if (show) visible += 1;
+    });
+    const count = el('quickCount');
+    if (count) count.textContent = visible + ' actions';
+  };
+
+  bindButtons();
+  el('quickSearch')?.addEventListener('input', filter);
+  el('quickShowAdvanced')?.addEventListener('change', filter);
+  filter();
+  renderActionHistory();
 };
 
 const wireNetworkTools = () => {
@@ -398,12 +721,30 @@ const wireCommandPalette = () => {
     { id: 'nav-startup', label: 'Go to Startup', action: () => setActive('startup') },
     { id: 'nav-notes', label: 'Go to Notes', action: () => setActive('notes') },
     { id: 'nav-settings', label: 'Go to Settings', action: () => setActive('settings') },
-    { id: 'act-clear-temp', label: 'Clear Temp Files', action: () => window.api.clearTemp() },
-    { id: 'act-flush-dns', label: 'Flush DNS', action: () => window.api.flushDns() },
-    { id: 'act-restart-explorer', label: 'Restart Explorer', action: () => window.api.restartExplorer() },
-    { id: 'act-battery', label: 'Generate Battery Report', action: () => window.api.batteryReport() },
-    { id: 'act-device', label: 'Open Device Manager', action: () => window.api.openDeviceManager() },
-    { id: 'act-kill-hung', label: 'Kill Hung Apps', action: () => window.api.killHung() },
+    { id: 'act-clear-temp', label: 'Clear Temp Files', action: () => runQuickAction('clearTemp') },
+    { id: 'act-flush-dns', label: 'Flush DNS', action: () => runQuickAction('flushDns') },
+    { id: 'act-restart-explorer', label: 'Restart Explorer', action: () => runQuickAction('restartExplorer') },
+    { id: 'act-battery', label: 'Generate Battery Report', action: () => runQuickAction('batteryReport') },
+    { id: 'act-device', label: 'Open Device Manager', action: () => runQuickAction('deviceManager') },
+    { id: 'act-kill-hung', label: 'Kill Hung Apps', action: () => runQuickAction('killHung') },
+    { id: 'act-open-temp', label: 'Open Temp Folder', action: () => runQuickAction('openTemp') },
+    { id: 'act-disk-cleanup', label: 'Open Disk Cleanup', action: () => runQuickAction('diskCleanup') },
+    { id: 'act-power', label: 'Open Power Options', action: () => runQuickAction('powerOptions') },
+    { id: 'act-taskmgr', label: 'Open Task Manager', action: () => runQuickAction('taskManager') },
+    { id: 'act-services', label: 'Open Services', action: () => runQuickAction('services') },
+    { id: 'act-event', label: 'Open Event Viewer', action: () => runQuickAction('eventViewer') },
+    { id: 'act-control', label: 'Open Control Panel', action: () => runQuickAction('controlPanel') },
+    { id: 'act-update', label: 'Open Windows Update', action: () => runQuickAction('windowsUpdate') },
+    { id: 'act-resource', label: 'Open Resource Monitor', action: () => runQuickAction('resourceMonitor') },
+    { id: 'act-sysprops', label: 'Open System Properties', action: () => runQuickAction('systemProperties') },
+    { id: 'act-netconn', label: 'Open Network Connections', action: () => runQuickAction('networkConnections') },
+    { id: 'act-hosts', label: 'Open Hosts File', action: () => runQuickAction('openHosts') },
+    { id: 'act-ping', label: 'Ping 8.8.8.8', action: () => runQuickAction('pingGoogle') },
+    { id: 'act-trace', label: 'Trace 8.8.8.8', action: () => runQuickAction('traceGoogle') },
+    { id: 'act-ipconfig', label: 'Show IP Config', action: () => runQuickAction('ipconfig') },
+    { id: 'act-sfc', label: 'Run SFC Scan', action: () => runQuickAction('sfcScan') },
+    { id: 'act-dism', label: 'Run DISM Scan', action: () => runQuickAction('dismScan') },
+    { id: 'act-chkdsk', label: 'Run Check Disk', action: () => runQuickAction('checkDisk') },
     { id: 'open-automation', label: 'Automation: Open Center', action: () => setActive('automation') },
     { id: 'open-processes', label: 'Focus Process Search', action: () => {
       setActive('process');
@@ -1044,6 +1385,12 @@ const wireDashboardButtons = () => {
 const init = async () => {
   setActive('dashboard');
 
+  const logoIds = ['logoLoading', 'logoTitlebar', 'logoSidebar'];
+  logoIds.forEach((id) => {
+    const img = el(id);
+    if (img) img.src = iconUrl;
+  });
+
   wireQuickActions();
   wireNetworkTools();
   wireDashboardButtons();
@@ -1123,9 +1470,9 @@ const tourSteps = [
     body: 'One-click fixes like clearing temp files, flushing DNS, and restarting Explorer.',
     page: 'quick',
     pos: 'dock',
-    target: '.tile-grid',
+    target: '.quick-grid',
     deblur: true,
-    union: '.tile',
+    union: '.quick-card',
   },
   {
     title: 'Disk Tools',
