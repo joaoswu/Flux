@@ -1,7 +1,7 @@
 {
   "name": "fluxtool",
   "productName": "Fluxtool",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Modern Windows multitool",
   "main": ".webpack/main",
   "private": true,
